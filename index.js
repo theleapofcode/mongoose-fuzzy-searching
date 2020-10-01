@@ -192,20 +192,18 @@ module.exports = function (schema, pluginOptions) {
         },
       };
     } else {
-      let q1, q2;
-      if(options.orQuery) {
+      let q1;
+      if (options.orQuery) {
+        options.orQuery.push({ $text: { $search: query } });
         q1 = {
-          $or: [
-            { $text: { $search: query },
-            options.orQuery
-          ]
+          $or: options.orQuery
         };
       } else {
-        q1 = { 
-            $text: { $search: query }
+        q1 = {
+          $text: { $search: query }
         };
       }
-      if(options.andQuery) {
+      if (options.andQuery) {
         search = {
           $and: [q1, options.andQuery],
         };
@@ -254,20 +252,18 @@ module.exports = function (schema, pluginOptions) {
         },
       };
     } else {
-      let q1, q2;
-      if(options.orQuery) {
+      let q1;
+      if (options.orQuery) {
+        options.orQuery.push({ $text: { $search: query } });
         q1 = {
-          $or: [
-            { $text: { $search: query },
-            options.orQuery
-          ]
+          $or: options.orQuery
         };
       } else {
-        q1 = { 
-            $text: { $search: query }
+        q1 = {
+          $text: { $search: query }
         };
       }
-      if(options.andQuery) {
+      if (options.andQuery) {
         search = {
           $and: [q1, options.andQuery],
         };
