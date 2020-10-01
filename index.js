@@ -192,9 +192,26 @@ module.exports = function (schema, pluginOptions) {
         },
       };
     } else {
-      search = {
-        $and: [{ $text: { $search: query } }, options],
-      };
+      let q1, q2;
+      if(options.orQuery) {
+        q1 = {
+          $or: [
+            { $text: { $search: query },
+            options.orQuery
+          ]
+        };
+      } else {
+        q1 = { 
+            $text: { $search: query }
+        };
+      }
+      if(options.andQuery) {
+        search = {
+          $and: [q1, options.andQuery],
+        };
+      } else {
+        search = q1;
+      }
     }
 
     return Model.find.apply(this, [
@@ -203,5 +220,62 @@ module.exports = function (schema, pluginOptions) {
       { sort: { confidenceScore: { $meta: 'textScore' } } },
       callback,
     ]);
+  };
+  
+  schema.statics.getFuzzySearchQuery = function (...args) {
+    const queryArgs = Object.values(args);
+    if (queryArgs.length === 0 || (!isString(queryArgs[0]) && !isObject(queryArgs[0]))) {
+      throw new TypeError(
+        'Fuzzy Search: First argument is mandatory and must be a string or an object.',
+      );
+    }
+
+    const queryString = isObject(queryArgs[0]) ? queryArgs[0].query : queryArgs[0];
+    const exact = isObject(queryArgs[0]) ? !!queryArgs[0].exact : false;
+
+    if (!queryString) {
+      return {};
+    }
+
+    const { checkPrefixOnly, defaultNgamMinSize } = getDefaultValues(queryArgs[0]);
+
+    const query = exact
+      ? `"${queryString}"`
+      : nGrams(queryString, false, defaultNgamMinSize, checkPrefixOnly).join(' ');
+
+    const { callback, options } = parseArguments(queryArgs, 1, 2);
+
+    let search;
+
+    if (!isObject(options)) {
+      search = {
+        $text: {
+          $search: query,
+        },
+      };
+    } else {
+      let q1, q2;
+      if(options.orQuery) {
+        q1 = {
+          $or: [
+            { $text: { $search: query },
+            options.orQuery
+          ]
+        };
+      } else {
+        q1 = { 
+            $text: { $search: query }
+        };
+      }
+      if(options.andQuery) {
+        search = {
+          $and: [q1, options.andQuery],
+        };
+      } else {
+        search = q1;
+      }
+    }
+
+    return search;
   };
 };
